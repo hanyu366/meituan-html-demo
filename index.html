@@ -1,0 +1,3834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI机票决策助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background-color: #fff;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* ========== 首页模式 ========== */
+        .home-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 120px 40px;
+        }
+
+        .home-page.hidden {
+            display: none;
+        }
+
+        /* 产品名区域 */
+        .product-name {
+            font-size: 36px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        /* 功能定义文案 */
+        .product-desc {
+            font-size: 16px;
+            color: #888;
+            margin-bottom: 60px;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        /* 查询区域 */
+        .search-area {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* 输入行 */
+        .input-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            flex: 1;
+            position: relative;
+        }
+
+        .input-label {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 14px 18px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-box:hover {
+            border-color: #FFD100;
+        }
+
+        .input-box.active {
+            border-color: #FFD100;
+            box-shadow: 0 0 0 3px rgba(255, 209, 0, 0.15);
+        }
+
+        .input-box input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 14px;
+            background: transparent;
+            cursor: text;
+        }
+
+        .input-box input::placeholder {
+            color: #bbb;
+        }
+
+        .input-box .arrow {
+            color: #999;
+            font-size: 10px;
+            transition: transform 0.2s;
+            margin-left: 8px;
+        }
+
+        .input-box.active .arrow {
+            transform: rotate(180deg);
+        }
+
+        /* 交换按钮 */
+        .swap-btn {
+            width: 36px;
+            height: 36px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            margin: 0 -4px;
+            align-self: flex-end;
+            margin-bottom: 4px;
+        }
+
+        .swap-btn:hover {
+            background: #FFD100;
+            border-color: #FFD100;
+        }
+
+        .swap-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: #666;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .swap-btn:hover svg {
+            stroke: #333;
+        }
+
+        /* 城市搜索面板 */
+        .city-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            display: none;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .city-panel.show {
+            display: block;
+        }
+
+        .city-search {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .city-search input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .city-search input:focus {
+            border-color: #FFD100;
+        }
+
+        .city-list {
+            padding: 8px 0;
+        }
+
+        .city-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 14px;
+        }
+
+        .city-item:hover {
+            background: #fafafa;
+        }
+
+        .city-item.selected {
+            background: #FFD100;
+            color: #333;
+        }
+
+        /* 日期选择面板 */
+        .date-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 300px;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            display: none;
+            padding: 16px;
+        }
+
+        .date-panel.show {
+            display: block;
+        }
+
+        .date-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .date-header-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .date-header-btn:hover {
+            background: #f5f5f5;
+            border-color: #FFD100;
+        }
+
+        .date-header-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .date-header-title .year-select,
+        .date-header-title .month-select {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .date-header-title .year-select:hover,
+        .date-header-title .month-select:hover {
+            background: #f5f5f5;
+        }
+
+        .date-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 8px;
+        }
+
+        .date-weekday {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            padding: 8px 0;
+        }
+
+        .date-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .date-day {
+            text-align: center;
+            padding: 8px 0;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.15s;
+            color: #333;
+        }
+
+        .date-day:hover {
+            background: #f5f5f5;
+        }
+
+        .date-day.other-month {
+            color: #ccc;
+        }
+
+        .date-day.today {
+            background: #f0f0f0;
+            font-weight: 500;
+        }
+
+        .date-day.selected {
+            background: #FFD100;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .date-day.disabled {
+            color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .date-day.disabled:hover {
+            background: transparent;
+        }
+
+        /* 年月选择下拉 */
+        .year-dropdown, .month-dropdown {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 110;
+            display: none;
+        }
+
+        .year-dropdown.show, .month-dropdown.show {
+            display: block;
+        }
+
+        .year-item, .month-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+
+        .year-item:hover, .month-item:hover {
+            background: #f5f5f5;
+        }
+
+        .year-item.selected, .month-item.selected {
+            background: #FFD100;
+            font-weight: 500;
+        }
+
+        /* 单程/往返 Tab切换 */
+        .trip-type-tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 24px;
+            width: fit-content;
+        }
+
+        .trip-tab {
+            padding: 12px 28px;
+            text-align: center;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .trip-tab:hover {
+            color: #333;
+        }
+
+        .trip-tab.active {
+            background: #fff;
+            color: #333;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        /* 第二行：附加条件 */
+        .second-row {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .field-group {
+            flex: 1;
+        }
+
+        .field-label {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* 人数选择 */
+        .passenger-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+
+        .passenger-control:hover {
+            border-color: #FFD100;
+        }
+
+        .passenger-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #e0e0e0;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .passenger-btn:hover {
+            background: #FFD100;
+            border-color: #FFD100;
+            color: #333;
+        }
+
+        .passenger-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .passenger-btn:disabled:hover {
+            background: #fff;
+            border-color: #e0e0e0;
+            color: #666;
+        }
+
+        .passenger-count {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .passenger-unit {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* 舱位选择 */
+        .cabin-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .cabin-option {
+            flex: 1;
+            padding: 10px 12px;
+            text-align: center;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .cabin-option:hover {
+            border-color: #FFD100;
+            color: #333;
+        }
+
+        .cabin-option.active {
+            background: #FFD100;
+            border-color: #FFD100;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* 返程日期（默认隐藏） */
+        .return-date-group {
+            display: none;
+        }
+
+        .return-date-group.show {
+            display: block;
+        }
+
+        /* 主按钮 */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: #FFD100;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .submit-btn:hover {
+            background: #FFE44D;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 209, 0, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ========== 结果页模式 ========== */
+        .result-page {
+            display: none;
+        }
+
+        .result-page.show {
+            display: block;
+        }
+
+        /* ========== 第1层：顶部查询条件栏 ========== */
+        .search-bar {
+            background: #fff;
+            height: 56px;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .search-bar-wrapper {
+            position: relative;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            transition: all 0.2s;
+            margin-right: 16px;
+        }
+
+        .back-btn:hover {
+            background: #FFD100;
+            color: #333;
+        }
+
+        .search-bar-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .search-info {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .search-info .route {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .search-info .divider {
+            color: #e0e0e0;
+        }
+
+        .search-info .tag {
+            background: #f5f5f5;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD100, #FFB800);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(255, 209, 0, 0.3);
+        }
+
+        /* 下拉编辑面板 */
+        .search-edit-panel {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            max-width: 560px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            padding: 0;
+            display: none;
+            z-index: 99;
+            overflow: hidden;
+        }
+
+        .search-edit-panel.show {
+            display: block;
+        }
+
+        .search-edit-panel .trip-type-section {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-edit-panel .trip-type-tabs {
+            display: flex;
+            background: #fff;
+            border-radius: 6px;
+            padding: 2px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .search-edit-panel .trip-tab {
+            padding: 8px 20px;
+            text-align: center;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .search-edit-panel .trip-tab.active {
+            background: #FFD100;
+            color: #333;
+        }
+
+        .search-edit-panel .edit-content {
+            padding: 16px 20px 20px;
+        }
+
+        .search-edit-panel .route-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .search-edit-panel .route-input-group {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-edit-panel .route-input-group .city-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-edit-panel .route-input-group .city-input:focus {
+            border-color: #FFD100;
+        }
+
+        .search-edit-panel .route-input-group .input-label {
+            position: absolute;
+            top: -6px;
+            left: 10px;
+            background: #fff;
+            padding: 0 4px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .search-edit-panel .swap-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: #f5f5f5;
+            cursor: pointer;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .search-edit-panel .swap-btn:hover {
+            background: #FFD100;
+            color: #333;
+        }
+
+        .search-edit-panel .date-section {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .search-edit-panel .date-group {
+            flex: 1;
+        }
+
+        .search-edit-panel .date-group .date-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 6px;
+        }
+
+        .search-edit-panel .date-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .search-edit-panel .options-section {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .search-edit-panel .option-group {
+            flex: 1;
+        }
+
+        .search-edit-panel .option-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 6px;
+        }
+
+        .search-edit-panel .passenger-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .search-edit-panel .passenger-btn {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #e0e0e0;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .search-edit-panel .passenger-btn:hover {
+            background: #FFD100;
+            border-color: #FFD100;
+            color: #333;
+        }
+
+        .search-edit-panel .passenger-count {
+            font-size: 15px;
+            font-weight: 500;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .search-edit-panel .cabin-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-edit-panel .cabin-option {
+            flex: 1;
+            padding: 10px 12px;
+            text-align: center;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .search-edit-panel .cabin-option.active {
+            background: #FFD100;
+            border-color: #FFD100;
+            color: #333;
+        }
+
+        .search-edit-panel .edit-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .search-edit-panel .footer-btn {
+            padding: 8px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .search-edit-panel .footer-btn-reset {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #666;
+        }
+
+        .search-edit-panel .footer-btn-search {
+            background: #FFD100;
+            border: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* ========== 第2层：低价发现摘要条 ========== */
+        .discovery-summary {
+            background: #fff;
+            padding: 12px 32px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .discovery-summary-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .summary-item .icon {
+            font-size: 16px;
+        }
+
+        .summary-item .highlight {
+            color: #FF6B00;
+            font-weight: 600;
+        }
+
+        .summary-item .sub {
+            color: #52C41A;
+            font-weight: 500;
+        }
+
+        /* ========== 主内容区 ========== */
+        .main-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px 32px;
+        }
+
+        /* ========== 第3层：双层筛选区 ========== */
+        .filter-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            color: #999;
+            min-width: 70px;
+            flex-shrink: 0;
+        }
+
+        .filter-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tag {
+            height: 32px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .filter-tag:hover {
+            border-color: #FFD100;
+            color: #333;
+        }
+
+        .filter-tag.active {
+            background: #FFD100;
+            border-color: #FFD100;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .filter-tag.ai-tag {
+            border-color: #FFD100;
+            color: #333;
+        }
+
+        .filter-tag.ai-tag:hover {
+            background: #FFFBEB;
+        }
+
+        /* ========== 第4层：AI发现摘要卡 ========== */
+        .ai-discovery-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .ai-discovery-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .ai-discovery-header .ai-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #FFD100, #FFB800);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .ai-discovery-header .title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ai-discovery-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .discovery-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .discovery-item .item-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 6px;
+        }
+
+        .discovery-item .item-value {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .discovery-item .item-value .price {
+            color: #FF6B00;
+            font-weight: 600;
+        }
+
+        .discovery-item .item-value .note {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .ai-discovery-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            justify-content: flex-end;
+        }
+
+        .ai-discovery-actions .btn {
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ai-discovery-actions .btn-primary {
+            background: #FFD100;
+            border: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .ai-discovery-actions .btn-secondary {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #666;
+        }
+
+        /* ========== 第5层：替代日期低价发现模块 ========== */
+        .alt-date-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .alt-date-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .alt-date-header .title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .alt-date-header .tip {
+            font-size: 13px;
+            color: #52C41A;
+        }
+
+        .alt-date-list {
+            display: flex;
+            gap: 12px;
+        }
+
+        .alt-date-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .alt-date-item:hover {
+            border-color: #FFD100;
+            background: #FFFBEB;
+        }
+
+        .alt-date-item.lowest {
+            border-color: #52C41A;
+            background: #F6FFED;
+        }
+
+        .alt-date-item .date {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .alt-date-item .price {
+            font-size: 18px;
+            font-weight: 600;
+            color: #FF6B00;
+        }
+
+        .alt-date-item .badge {
+            font-size: 11px;
+            color: #52C41A;
+            margin-top: 4px;
+        }
+
+        /* ========== 第6层：航班结果列表 ========== */
+        .flight-list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .flight-list-header .title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .flight-list-header .sort-options {
+            display: flex;
+            gap: 16px;
+        }
+
+        .flight-list-header .sort-item {
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .flight-list-header .sort-item.active {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .flight-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .flight-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.2s;
+        }
+
+        .flight-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+
+        .flight-card .card-main {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .flight-card .airline-block {
+            min-width: 120px;
+        }
+
+        .flight-card .airline-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .flight-card .airline-logo {
+            width: 28px;
+            height: 28px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .flight-card .airline-name {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .flight-card .flight-no {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .flight-card .time-route-block {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .flight-card .time-block {
+            text-align: center;
+        }
+
+        .flight-card .time-block .time {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .flight-card .time-block .airport {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .flight-card .duration-block {
+            text-align: center;
+            flex: 1;
+            padding: 0 20px;
+        }
+
+        .flight-card .duration-block .line {
+            height: 1px;
+            background: #e0e0e0;
+            position: relative;
+            margin-bottom: 6px;
+        }
+
+        .flight-card .duration-block .line::before {
+            content: '✈';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 0 8px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .flight-card .duration-block .duration {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .flight-card .duration-block .direct {
+            font-size: 11px;
+            color: #52C41A;
+            background: #F6FFED;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .flight-card .price-block {
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .flight-card .price-block .price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #FF6B00;
+        }
+
+        .flight-card .price-block .price .unit {
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .flight-card .price-block .per-person {
+            font-size: 13px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        /* 价格状态标签 */
+        .flight-card .price-status-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            justify-content: flex-end;
+        }
+
+        .flight-card .status-tag {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .flight-card .status-tag.lowest {
+            background: #F6FFED;
+            color: #52C41A;
+        }
+
+        .flight-card .status-tag.good-value {
+            background: #FFFBEB;
+            color: #D48806;
+        }
+
+        .flight-card .status-tag.comprehensive {
+            background: #E6F7FF;
+            color: #1890FF;
+        }
+
+        /* 低价发现依据 */
+        .flight-card .discovery-evidence {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .flight-card .evidence-row {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 8px;
+        }
+
+        .flight-card .evidence-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .flight-card .evidence-item .label {
+            color: #999;
+        }
+
+        .flight-card .evidence-item .value {
+            color: #333;
+        }
+
+        .flight-card .evidence-item .value.positive {
+            color: #52C41A;
+        }
+
+        .flight-card .evidence-item .value.negative {
+            color: #FF4D4F;
+        }
+
+        /* AI解读区 */
+        .flight-card .ai-insight {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+        }
+
+        .flight-card .ai-insight .insight-text {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .flight-card .ai-insight .insight-text .highlight {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .flight-card .ai-insight .ai-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .flight-card .ai-insight .ai-tag {
+            padding: 4px 10px;
+            background: #fff;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #666;
+            border: 1px solid #eee;
+        }
+
+        .flight-card .ai-insight .ai-tag.positive {
+            color: #52C41A;
+            border-color: #B7EB8F;
+            background: #F6FFED;
+        }
+
+        .flight-card .ai-insight .ai-tag.negative {
+            color: #FF4D4F;
+            border-color: #FFA39E;
+            background: #FFF2F0;
+        }
+
+        /* 操作区 */
+        .flight-card .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .flight-card .card-actions .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .flight-card .card-actions .btn-outline {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #666;
+        }
+
+        .flight-card .card-actions .btn-outline:hover {
+            border-color: #FFD100;
+            color: #333;
+        }
+
+        .flight-card .card-actions .btn-compare {
+            background: #fff;
+            border: 1px solid #FFD100;
+            color: #333;
+        }
+
+        .flight-card .card-actions .btn-buy {
+            background: #FFD100;
+            border: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* ========== 对比托盘 ========== */
+        .compare-tray {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #FFD100;
+            padding: 12px 32px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+            z-index: 100;
+            height: 56px;
+        }
+
+        .compare-tray.show {
+            display: flex;
+        }
+
+        .compare-tray .selected-count {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .compare-tray .tray-btn {
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .compare-tray .tray-btn.view-compare {
+            background: #333;
+            border: none;
+            color: #FFD100;
+            font-weight: 500;
+        }
+
+        .compare-tray .tray-btn.cancel-btn {
+            background: #fff;
+            border: 1px solid #333;
+            color: #333;
+        }
+
+        /* ========== AI解读抽屉 ========== */
+        .ai-drawer {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 420px;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+            z-index: 200;
+            transition: right 0.3s ease-out;
+            overflow-y: auto;
+        }
+
+        .ai-drawer.show {
+            right: 0;
+        }
+
+        .ai-drawer .drawer-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 10;
+        }
+
+        .ai-drawer .drawer-header .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ai-drawer .drawer-header .close-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-drawer .drawer-content {
+            padding: 20px;
+        }
+
+        .ai-drawer .flight-mini {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+
+        .ai-drawer .flight-mini .flight-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .ai-drawer .flight-mini .flight-time {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .ai-drawer .section {
+            margin-bottom: 24px;
+        }
+
+        .ai-drawer .section .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-drawer .section .section-content {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.7;
+        }
+
+        .ai-drawer .section .section-content ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .ai-drawer .section .section-content li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .ai-drawer .section .section-content li::before {
+            content: '•';
+            position: absolute;
+            left: 6px;
+            color: #FFD100;
+            font-weight: bold;
+        }
+
+        .ai-drawer .section .section-content .alt-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .ai-drawer .section .section-content .alt-item .alt-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .ai-drawer .section .section-content .alt-item .alt-desc {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .ai-drawer .drawer-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 12px;
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+        }
+
+        .ai-drawer .drawer-footer .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ai-drawer .drawer-footer .btn-compare {
+            background: #FFD100;
+            border: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .ai-drawer .drawer-footer .btn-ask {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #666;
+        }
+
+        /* ========== 对比弹层 ========== */
+        .compare-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+        }
+
+        .compare-modal.show {
+            display: flex;
+        }
+
+        .compare-modal .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .compare-modal .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 10;
+        }
+
+        .compare-modal .modal-header .title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .compare-modal .modal-header .close-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .compare-modal .modal-body {
+            padding: 24px;
+        }
+
+        .compare-modal .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .compare-modal .compare-table th,
+        .compare-modal .compare-table td {
+            padding: 12px 16px;
+            text-align: center;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+
+        .compare-modal .compare-table th {
+            background: #f9f9f9;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .compare-modal .compare-table td {
+            color: #333;
+        }
+
+        .compare-modal .compare-table .flight-col {
+            font-weight: 500;
+        }
+
+        .compare-modal .compare-table .price-cell {
+            color: #FF6B00;
+            font-weight: 600;
+        }
+
+        .compare-modal .compare-table .highlight {
+            background: #FFFBEB;
+        }
+
+        .compare-modal .compare-table .check {
+            color: #52C41A;
+        }
+
+        .compare-modal .compare-table .cross {
+            color: #FF4D4F;
+        }
+
+        .compare-modal .ai-insight {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .compare-modal .ai-insight .insight-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .compare-modal .ai-insight .insight-list {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .compare-modal .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .compare-modal .modal-footer .btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .compare-modal .modal-footer .btn-primary {
+            background: #FFD100;
+            border: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .compare-modal .modal-footer .btn-secondary {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #666;
+        }
+
+        /* ========== 右侧AI助手面板 ========== */
+        .ai-assistant-panel {
+            position: fixed;
+            top: 56px;
+            right: 0;
+            width: 360px;
+            height: calc(100vh - 56px);
+            background: #fff;
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+            z-index: 150;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ai-assistant-panel.show {
+            transform: translateX(0);
+        }
+
+        .ai-assistant-panel .panel-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #FFD100, #FFB800);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-assistant-panel .panel-header .title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-assistant-panel .panel-header .close-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-assistant-panel .panel-body {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .ai-assistant-panel .preset-questions {
+            margin-bottom: 16px;
+        }
+
+        .ai-assistant-panel .preset-questions .label {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .ai-assistant-panel .preset-btn {
+            display: block;
+            width: 100%;
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            text-align: left;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .ai-assistant-panel .preset-btn:hover {
+            background: #FFFBEB;
+        }
+
+        .ai-assistant-panel .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .ai-assistant-panel .chat-message {
+            display: flex;
+            gap: 10px;
+        }
+
+        .ai-assistant-panel .chat-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .ai-assistant-panel .chat-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .ai-assistant-panel .chat-message.ai .chat-avatar {
+            background: linear-gradient(135deg, #FFD100, #FFB800);
+        }
+
+        .ai-assistant-panel .chat-message.user .chat-avatar {
+            background: #f0f0f0;
+        }
+
+        .ai-assistant-panel .chat-bubble {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .ai-assistant-panel .chat-message.ai .chat-bubble {
+            background: #f5f5f5;
+        }
+
+        .ai-assistant-panel .chat-message.user .chat-bubble {
+            background: #FFFBEB;
+        }
+
+        .ai-assistant-panel .chat-input-area {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .ai-assistant-panel .chat-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .ai-assistant-panel .chat-input:focus {
+            border-color: #FFD100;
+        }
+
+        .ai-assistant-panel .chat-send-btn {
+            width: 36px;
+            height: 36px;
+            background: #FFD100;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        /* AI助手触发按钮 */
+        .ai-trigger-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #FFD100, #FFB800);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(255, 209, 0, 0.4);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s;
+        }
+
+        .ai-trigger-btn.show {
+            display: flex;
+        }
+
+        .ai-trigger-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 209, 0, 0.5);
+        }
+
+        /* ========== 遮罩层 ========== */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 140;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 900px) {
+            .home-page {
+                padding: 60px 16px;
+            }
+
+            .product-name {
+                font-size: 24px;
+            }
+
+            .product-desc {
+                font-size: 14px;
+                margin-bottom: 32px;
+            }
+
+            .input-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .swap-btn {
+                margin: 0 auto;
+                transform: rotate(90deg);
+            }
+
+            .second-row {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .cabin-options {
+                flex-direction: column;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+
+            .ai-discovery-content {
+                grid-template-columns: 1fr;
+            }
+
+            .alt-date-list {
+                flex-wrap: wrap;
+            }
+
+            .alt-date-item {
+                min-width: calc(33% - 8px);
+            }
+
+            .flight-card .card-main {
+                flex-wrap: wrap;
+            }
+
+            .ai-assistant-panel {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ========== 首页模式 ========== -->
+    <div class="home-page" id="home-page">
+        <!-- 产品名 -->
+        <h1 class="product-name">AI机票决策助手</h1>
+
+        <!-- 功能定义 -->
+        <p class="product-desc">面向明确出行需求，提供低价机票查询、价格解读与决策辅助</p>
+
+        <!-- 查询输入区 -->
+        <div class="search-area">
+            <!-- 单程/往返切换 -->
+            <div class="trip-type-tabs" id="home-trip-tabs">
+                <div class="trip-tab active" data-type="oneway">单程</div>
+                <div class="trip-tab" data-type="roundtrip">往返</div>
+            </div>
+
+            <!-- 第一行：出发地、到达地、日期 -->
+            <div class="input-row">
+                <div class="input-group">
+                    <label class="input-label">出发地</label>
+                    <div class="input-box" id="origin-box">
+                        <input type="text" placeholder="请选择城市" id="origin-input" readonly>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="city-panel" id="origin-panel">
+                        <div class="city-search">
+                            <input type="text" placeholder="搜索城市" id="origin-search">
+                        </div>
+                        <div class="city-list" id="origin-list"></div>
+                    </div>
+                </div>
+
+                <button class="swap-btn" id="swap-btn" title="交换出发地和目的地">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M7 16L3 12l4-4M3 12h18M17 8l4 4-4 4M21 12H3"/>
+                    </svg>
+                </button>
+
+                <div class="input-group">
+                    <label class="input-label">到达地</label>
+                    <div class="input-box" id="dest-box">
+                        <input type="text" placeholder="请选择城市" id="dest-input" readonly>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="city-panel" id="dest-panel">
+                        <div class="city-search">
+                            <input type="text" placeholder="搜索城市" id="dest-search">
+                        </div>
+                        <div class="city-list" id="dest-list"></div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">出发日期</label>
+                    <div class="input-box" id="date-box">
+                        <input type="text" placeholder="请选择日期" id="date-input" readonly>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="date-panel" id="date-panel">
+                        <div class="date-header">
+                            <button class="date-header-btn" id="prev-month">‹</button>
+                            <div class="date-header-title">
+                                <span class="year-select" id="year-select">2026年</span>
+                                <span class="month-select" id="month-select">4月</span>
+                            </div>
+                            <button class="date-header-btn" id="next-month">›</button>
+                        </div>
+                        <div class="date-weekdays">
+                            <div class="date-weekday">日</div>
+                            <div class="date-weekday">一</div>
+                            <div class="date-weekday">二</div>
+                            <div class="date-weekday">三</div>
+                            <div class="date-weekday">四</div>
+                            <div class="date-weekday">五</div>
+                            <div class="date-weekday">六</div>
+                        </div>
+                        <div class="date-days" id="date-days"></div>
+                    </div>
+                    <div class="year-dropdown" id="year-dropdown"></div>
+                    <div class="month-dropdown" id="month-dropdown"></div>
+                </div>
+
+                <div class="input-group return-date-group" id="return-date-group">
+                    <label class="input-label">返程日期</label>
+                    <div class="input-box" id="return-date-box">
+                        <input type="text" placeholder="请选择日期" id="return-date-input" readonly>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="date-panel" id="return-date-panel">
+                        <div class="date-header">
+                            <button class="date-header-btn" id="return-prev-month">‹</button>
+                            <div class="date-header-title">
+                                <span class="year-select" id="return-year-select">2026年</span>
+                                <span class="month-select" id="return-month-select">4月</span>
+                            </div>
+                            <button class="date-header-btn" id="return-next-month">›</button>
+                        </div>
+                        <div class="date-weekdays">
+                            <div class="date-weekday">日</div>
+                            <div class="date-weekday">一</div>
+                            <div class="date-weekday">二</div>
+                            <div class="date-weekday">三</div>
+                            <div class="date-weekday">四</div>
+                            <div class="date-weekday">五</div>
+                            <div class="date-weekday">六</div>
+                        </div>
+                        <div class="date-days" id="return-date-days"></div>
+                    </div>
+                    <div class="year-dropdown" id="return-year-dropdown"></div>
+                    <div class="month-dropdown" id="return-month-dropdown"></div>
+                </div>
+            </div>
+
+            <!-- 第二行：人数、舱位 -->
+            <div class="second-row">
+                <div class="field-group">
+                    <label class="field-label">人数</label>
+                    <div class="passenger-control">
+                        <button class="passenger-btn" id="passenger-minus">−</button>
+                        <span class="passenger-count" id="passenger-count">1</span>
+                        <span class="passenger-unit">人</span>
+                        <button class="passenger-btn" id="passenger-plus">+</button>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">舱位</label>
+                    <div class="cabin-options" id="home-cabin-options">
+                        <div class="cabin-option active" data-cabin="economy">经济舱</div>
+                        <div class="cabin-option" data-cabin="business">商务舱</div>
+                        <div class="cabin-option" data-cabin="first">头等舱</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主按钮 -->
+            <button class="submit-btn" id="submit-btn">查询低价方案</button>
+        </div>
+    </div>
+
+    <!-- ========== 结果页模式 ========== -->
+    <div class="result-page" id="result-page">
+        <!-- 第1层：顶部查询条件栏 -->
+        <div class="search-bar-wrapper">
+            <div class="search-bar" id="search-bar">
+                <div class="search-bar-left">
+                    <button class="back-btn" id="back-btn" title="返回首页">←</button>
+                    <div class="search-info" id="search-info">
+                        <span class="route" id="route-display">北京 → 上海</span>
+                        <span class="divider">|</span>
+                        <span id="date-display">4月18日 周五</span>
+                        <span class="divider">|</span>
+                        <span class="tag" id="trip-type-display">单程</span>
+                        <span class="tag" id="passengers-display">2人</span>
+                        <span class="tag" id="cabin-display">经济舱</span>
+                    </div>
+                </div>
+                <div class="user-avatar" id="user-avatar">
+                    <span>👤</span>
+                </div>
+            </div>
+
+            <!-- 下拉编辑面板 -->
+            <div class="search-edit-panel" id="search-edit-panel">
+                <div class="trip-type-section">
+                    <div class="trip-type-tabs" id="edit-trip-tabs">
+                        <div class="trip-tab active" data-type="oneway">单程</div>
+                        <div class="trip-tab" data-type="roundtrip">往返</div>
+                    </div>
+                </div>
+                <div class="edit-content">
+                    <div class="route-section">
+                        <div class="route-input-group">
+                            <span class="input-label">出发地</span>
+                            <input type="text" class="city-input" id="edit-origin" placeholder="请输入城市">
+                        </div>
+                        <button class="swap-btn" id="swap-cities">⇄</button>
+                        <div class="route-input-group">
+                            <span class="input-label">到达地</span>
+                            <input type="text" class="city-input" id="edit-destination" placeholder="请输入城市">
+                        </div>
+                    </div>
+                    <div class="date-section">
+                        <div class="date-group">
+                            <div class="date-label">出发日期</div>
+                            <input type="date" class="date-input" id="edit-depart-date">
+                        </div>
+                        <div class="date-group return-date-group" id="edit-return-date-group" style="display: none;">
+                            <div class="date-label">返程日期</div>
+                            <input type="date" class="date-input" id="edit-return-date">
+                        </div>
+                    </div>
+                    <div class="options-section">
+                        <div class="option-group">
+                            <div class="option-label">乘客人数</div>
+                            <div class="passenger-control">
+                                <button class="passenger-btn" id="edit-passenger-minus">−</button>
+                                <span class="passenger-count" id="edit-passenger-count">1</span>
+                                <button class="passenger-btn" id="edit-passenger-plus">+</button>
+                                <span style="font-size:13px;color:#666;margin-left:4px;">人</span>
+                            </div>
+                        </div>
+                        <div class="option-group">
+                            <div class="option-label">舱位等级</div>
+                            <div class="cabin-options" id="edit-cabin-options">
+                                <div class="cabin-option active" data-cabin="economy">经济舱</div>
+                                <div class="cabin-option" data-cabin="business">商务舱</div>
+                                <div class="cabin-option" data-cabin="first">头等舱</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="edit-footer">
+                        <button class="footer-btn footer-btn-reset" id="edit-reset">重置</button>
+                        <button class="footer-btn footer-btn-search" id="edit-search">搜索航班</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第2层：低价发现摘要条 -->
+        <div class="discovery-summary">
+            <div class="discovery-summary-inner">
+                <div class="summary-item">
+                    <span class="icon">🔍</span>
+                    共找到 <span class="highlight">18</span> 个符合条件的方案
+                </div>
+                <div class="summary-item">
+                    <span class="icon">💰</span>
+                    其中 <span class="sub">3</span> 个为今日低价
+                </div>
+                <div class="summary-item">
+                    <span class="icon">📦</span>
+                    <span class="sub">2</span> 个虽非最低价，但含托运后更划算
+                </div>
+                <div class="summary-item">
+                    <span class="icon">📅</span>
+                    若接受前后1天，最低可再省 <span class="highlight">¥200</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 第3层：双层筛选区 -->
+            <div class="filter-section">
+                <div class="filter-row">
+                    <span class="filter-label">基础筛选</span>
+                    <div class="filter-tags">
+                        <div class="filter-tag active">全部</div>
+                        <div class="filter-tag">最低价</div>
+                        <div class="filter-tag">最短时长</div>
+                        <div class="filter-tag">仅直飞</div>
+                        <div class="filter-tag">可退改</div>
+                        <div class="filter-tag">含托运</div>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <span class="filter-label">AI发现</span>
+                    <div class="filter-tags">
+                        <div class="filter-tag ai-tag">真低价</div>
+                        <div class="filter-tag ai-tag">近7日低位</div>
+                        <div class="filter-tag ai-tag">含行李更划算</div>
+                        <div class="filter-tag ai-tag">退改更稳</div>
+                        <div class="filter-tag ai-tag">前后1天更省</div>
+                        <div class="filter-tag ai-tag">适合2人出行</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第4层：AI发现摘要卡 -->
+            <div class="ai-discovery-card">
+                <div class="ai-discovery-header">
+                    <div class="ai-icon">🤖</div>
+                    <span class="title">AI 发现摘要</span>
+                </div>
+                <div class="ai-discovery-content">
+                    <div class="discovery-item">
+                        <div class="item-label">最低裸票价方案</div>
+                        <div class="item-value">
+                            春秋 <span class="price">¥960</span>
+                            <div class="note">不含托运、不可退改</div>
+                        </div>
+                    </div>
+                    <div class="discovery-item">
+                        <div class="item-label">综合最优方案</div>
+                        <div class="item-value">
+                            东航 <span class="price">¥1480</span>
+                            <div class="note">含23kg托运，2人出行更稳</div>
+                        </div>
+                    </div>
+                    <div class="discovery-item">
+                        <div class="item-label">替代日期更优方案</div>
+                        <div class="item-value">
+                            4月17日 <span class="price">¥760</span>
+                            <div class="note">提前1天出发，省¥200</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-discovery-actions">
+                    <button class="btn btn-secondary" id="view-alt-date-btn">查看替代日期</button>
+                    <button class="btn btn-primary" id="view-best-btn">查看综合最优</button>
+                </div>
+            </div>
+
+            <!-- 第5层：替代日期低价发现模块 -->
+            <div class="alt-date-section">
+                <div class="alt-date-header">
+                    <span class="title">📅 前后日期价格对比</span>
+                    <span class="tip">💡 若可提前1天出发，人均可再省 ¥100</span>
+                </div>
+                <div class="alt-date-list">
+                    <div class="alt-date-item lowest">
+                        <div class="date">4月17日 周四</div>
+                        <div class="price">¥760</div>
+                        <div class="badge">最低价</div>
+                    </div>
+                    <div class="alt-date-item">
+                        <div class="date">4月18日 周五</div>
+                        <div class="price">¥960</div>
+                        <div class="badge">当前日期</div>
+                    </div>
+                    <div class="alt-date-item">
+                        <div class="date">4月19日 周六</div>
+                        <div class="price">¥1020</div>
+                    </div>
+                    <div class="alt-date-item">
+                        <div class="date">4月20日 周日</div>
+                        <div class="price">¥1080</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第6层：航班结果列表 -->
+            <div class="flight-list-header">
+                <span class="title">航班结果</span>
+                <div class="sort-options">
+                    <span class="sort-item">综合排序 ↓</span>
+                    <span class="sort-item active">价格 ↑</span>
+                    <span class="sort-item">时长 ↑</span>
+                    <span class="sort-item">起飞时间 ↑</span>
+                </div>
+            </div>
+
+            <div class="flight-cards" id="flight-cards">
+                <!-- 卡片由JS动态生成 -->
+            </div>
+        </div>
+
+        <!-- 对比托盘 -->
+        <div class="compare-tray" id="compare-tray">
+            <span class="selected-count">已选 <span id="compare-count">0</span> 个方案</span>
+            <button class="tray-btn view-compare" id="view-compare-btn">查看对比</button>
+            <button class="tray-btn cancel-btn" id="cancel-compare-btn">取消</button>
+        </div>
+
+        <!-- AI解读抽屉 -->
+        <div class="ai-drawer" id="ai-drawer">
+            <div class="drawer-header">
+                <span class="title">🤖 AI 解读</span>
+                <button class="close-btn" id="drawer-close">×</button>
+            </div>
+            <div class="drawer-content" id="drawer-content">
+                <!-- 内容由JS动态生成 -->
+            </div>
+            <div class="drawer-footer">
+                <button class="btn btn-compare" id="drawer-compare-btn">加入对比</button>
+                <button class="btn btn-ask" id="drawer-ask-btn">继续问AI</button>
+            </div>
+        </div>
+
+        <!-- 对比弹层 -->
+        <div class="compare-modal" id="compare-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="title">📊 航班对比</span>
+                    <button class="close-btn" id="modal-close">×</button>
+                </div>
+                <div class="modal-body" id="modal-body">
+                    <!-- 内容由JS动态生成 -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="modal-cancel">继续对比</button>
+                    <button class="btn btn-primary" id="modal-confirm">选择推荐航班</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 遮罩层 -->
+        <div class="overlay" id="overlay"></div>
+
+        <!-- AI助手触发按钮 -->
+        <button class="ai-trigger-btn show" id="ai-trigger-btn">🤖</button>
+
+        <!-- 右侧AI助手面板 -->
+        <div class="ai-assistant-panel" id="ai-assistant-panel">
+            <div class="panel-header">
+                <span class="title">🤖 AI机票助手</span>
+                <button class="close-btn" id="ai-panel-close">×</button>
+            </div>
+            <div class="panel-body">
+                <div class="preset-questions">
+                    <div class="label">快速提问</div>
+                    <button class="preset-btn" data-question="当前结果里哪张最值得买？">当前结果里哪张最值得买？</button>
+                    <button class="preset-btn" data-question="我带24寸箱子应该选哪张？">我带24寸箱子应该选哪张？</button>
+                    <button class="preset-btn" data-question="2个人出行怎么选更划算？">2个人出行怎么选更划算？</button>
+                    <button class="preset-btn" data-question="前后一天还有更低价吗？">前后一天还有更低价吗？</button>
+                </div>
+                <div class="chat-container" id="chat-container">
+                    <div class="chat-message ai">
+                        <div class="chat-avatar">🤖</div>
+                        <div class="chat-bubble">
+                            您好！我是AI机票助手，可以帮您分析航班优劣、解答行李托运问题、对比不同方案。有什么可以帮您的吗？
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="输入您的问题...">
+                    <button class="chat-send-btn" id="chat-send-btn">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 全局状态
+        // ============================================================
+        const cities = [
+            '北京', '上海', '广州', '深圳', '成都', '杭州', '南京', '武汉',
+            '西安', '重庆', '天津', '苏州', '厦门', '青岛', '大连', '长沙',
+            '郑州', '昆明', '三亚', '海口', '福州', '南昌', '合肥', '太原',
+            '沈阳', '长春', '哈尔滨', '石家庄', '济南', '无锡', '宁波', '东莞'
+        ];
+
+        // 查询条件状态
+        let searchParams = {
+            origin: '',
+            destination: '',
+            departDate: '',
+            returnDate: '',
+            tripType: 'oneway',
+            passengers: 1,
+            cabin: 'economy'
+        };
+
+        // 首页日期选择器状态
+        let currentYear = 2026;
+        let currentMonth = 4;
+        let returnCurrentYear = 2026;
+        let returnCurrentMonth = 4;
+        const today = new Date(2026, 3, 15);
+        const years = [2026, 2027];
+        const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+        // 结果页状态
+        let currentFilter = {
+            basic: '全部',
+            ai: null,
+            sort: 'price'
+        };
+        let compareList = [];
+        let editPassengerCount = 1;
+        let editCabin = 'economy';
+        let editTripType = 'oneway';
+
+        // ============================================================
+        // Mock航班数据
+        // ============================================================
+        const flightData = [
+            {
+                id: 'F001',
+                airline: '春秋航空',
+                flightNo: '9C8957',
+                departTime: '06:35',
+                departAirport: '北京大兴机场',
+                arriveTime: '08:55',
+                arriveAirport: '上海虹桥机场',
+                isDirect: true,
+                duration: '2h20m',
+                totalPrice: 960,
+                pricePerPerson: 480,
+                baggageIncluded: false,
+                baggageInfo: '仅7kg手提',
+                refundPolicy: '不可退改',
+                priceStatus: 'lowest',
+                discoveryEvidence: {
+                    nakedPrice: '¥960',
+                    baggage: '仅7kg手提',
+                    refund: '不可退改',
+                    aiInsight: '裸票最低，但若有托运行李，综合成本不再占优'
+                },
+                aiTags: [
+                    { text: '今日最低', type: 'positive' },
+                    { text: '不含托运', type: 'negative' },
+                    { text: '不可退改', type: 'negative' }
+                ],
+                isRecommended: false,
+                aiDetail: {
+                    whyWorth: ['价格最低，适合预算紧张的旅客', '早班机，可充分利用当天时间', '直飞无中转'],
+                    hiddenCosts: ['不含托运行李，需额外购买约¥100-200', '大兴机场距离市区较远', '不可退改，临时变动损失大'],
+                    suitableFor: ['轻装出行的年轻人', '预算有限的背包客', '行程确定的旅客'],
+                    alternatives: [{ name: 'CA1501 早班机', desc: '多¥200，但含托运且可退改' }]
+                }
+            },
+            {
+                id: 'F002',
+                airline: '中国国航',
+                flightNo: 'CA1501',
+                departTime: '07:30',
+                departAirport: '北京首都机场',
+                arriveTime: '09:40',
+                arriveAirport: '上海虹桥机场',
+                isDirect: true,
+                duration: '2h10m',
+                totalPrice: 1360,
+                pricePerPerson: 680,
+                baggageIncluded: true,
+                baggageInfo: '含20kg托运/人',
+                refundPolicy: '起飞前24h外免费退改',
+                priceStatus: 'good-value',
+                discoveryEvidence: {
+                    nakedPrice: '¥1360',
+                    baggage: '含20kg托运',
+                    refund: '起飞前24h免费退改',
+                    aiInsight: '早起一点，省下200元，退改也灵活'
+                },
+                aiTags: [
+                    { text: '含托运', type: 'positive' },
+                    { text: '退改友好', type: 'positive' },
+                    { text: '飞行最短', type: 'positive' }
+                ],
+                isRecommended: false,
+                aiDetail: {
+                    whyWorth: ['飞行时间最短，仅2h10m', '含20kg托运，省去额外费用', '首都机场出发交通便利', '退改政策友好'],
+                    hiddenCosts: ['早班机需要早起', '首都机场高峰期可能拥堵'],
+                    suitableFor: ['能早起的时间灵活旅客', '需要托运行李的旅客', '商务出差人士'],
+                    alternatives: [{ name: 'MU5102 黄金时段', desc: '多¥60，时间更舒适' }]
+                }
+            },
+            {
+                id: 'F003',
+                airline: '东方航空',
+                flightNo: 'MU5102',
+                departTime: '10:00',
+                departAirport: '北京首都机场',
+                arriveTime: '12:15',
+                arriveAirport: '上海虹桥机场',
+                isDirect: true,
+                duration: '2h15m',
+                totalPrice: 1480,
+                pricePerPerson: 740,
+                baggageIncluded: true,
+                baggageInfo: '含23kg托运/人',
+                refundPolicy: '起飞前2h外免费退改',
+                priceStatus: 'comprehensive',
+                discoveryEvidence: {
+                    nakedPrice: '¥1480',
+                    baggage: '含23kg托运',
+                    refund: '起飞前2h免费退改',
+                    aiInsight: '不是最低价，但2人出行综合成本更优'
+                },
+                aiTags: [
+                    { text: '综合最优', type: 'positive' },
+                    { text: '黄金时段', type: 'positive' },
+                    { text: '含托运', type: 'positive' }
+                ],
+                isRecommended: false,
+                aiDetail: {
+                    whyWorth: ['黄金时段：10点起飞，不用早起', '机场友好：首都出发、虹桥到达', '托运无忧：每人23kg额度', '退改灵活：起飞前2h外免费'],
+                    hiddenCosts: ['首都机场交通：机场快轨¥25/人', '虹桥机场到达：地铁进城约30分钟'],
+                    suitableFor: ['商务出差', '家庭出行', '自由行旅客'],
+                    alternatives: [{ name: 'CA1501 早班机', desc: '便宜¥60，但需要早起' }]
+                }
+            },
+            {
+                id: 'F004',
+                airline: '中国国航',
+                flightNo: 'CA1831',
+                departTime: '12:30',
+                departAirport: '北京首都机场',
+                arriveTime: '14:50',
+                arriveAirport: '上海浦东机场',
+                isDirect: true,
+                duration: '2h20m',
+                totalPrice: 1680,
+                pricePerPerson: 840,
+                baggageIncluded: true,
+                baggageInfo: '含23kg托运/人',
+                refundPolicy: '起飞前4h外免费退改',
+                aircraft: '宽体机(A350)',
+                priceStatus: null,
+                discoveryEvidence: {
+                    nakedPrice: '¥1680',
+                    baggage: '含23kg托运',
+                    refund: '起飞前4h免费退改',
+                    aiInsight: '宽体机更舒适，适合对飞行体验有要求的旅客'
+                },
+                aiTags: [
+                    { text: '宽体机舒适', type: 'positive' },
+                    { text: '含托运', type: 'positive' }
+                ],
+                isRecommended: false,
+                notice: '浦东机场距市区远，需预留交通时间',
+                aiDetail: {
+                    whyWorth: ['宽体机A350，座位宽敞舒适', '午间出发，时间从容', '含23kg托运额度'],
+                    hiddenCosts: ['到达浦东机场，距市区约40分钟', '浦东打车到市区约¥120-150'],
+                    suitableFor: ['追求舒适体验的旅客', '长途飞行需要休息的旅客'],
+                    alternatives: [{ name: 'MU5102 黄金时段', desc: '省¥100，到达虹桥更近市区' }]
+                }
+            },
+            {
+                id: 'F005',
+                airline: '东方航空',
+                flightNo: 'MU5137',
+                departTime: '19:00',
+                departAirport: '北京首都机场',
+                arriveTime: '21:20',
+                arriveAirport: '上海虹桥机场',
+                isDirect: true,
+                duration: '2h20m',
+                totalPrice: 1240,
+                pricePerPerson: 620,
+                baggageIncluded: true,
+                baggageInfo: '含23kg托运/人',
+                refundPolicy: '起飞前24h外免费退改',
+                priceStatus: 'good-value',
+                discoveryEvidence: {
+                    nakedPrice: '¥1240',
+                    baggage: '含23kg托运',
+                    refund: '起飞前24h免费退改',
+                    aiInsight: '晚班机价格适中，适合白天有事、晚上出发的旅客'
+                },
+                aiTags: [
+                    { text: '价格适中', type: 'positive' },
+                    { text: '含托运', type: 'positive' },
+                    { text: '晚班出发', type: 'positive' }
+                ],
+                isRecommended: false,
+                aiDetail: {
+                    whyWorth: ['价格适中，性价比不错', '晚班出发，白天可处理事务', '含23kg托运额度', '到达虹桥，交通便利'],
+                    hiddenCosts: ['晚上到达，可能影响第二天行程'],
+                    suitableFor: ['白天有事的商务人士', '不着急到达的旅客'],
+                    alternatives: [{ name: 'MU5102 黄金时段', desc: '多¥120，时间更好' }]
+                }
+            }
+        ];
+
+        // ============================================================
+        // 工具函数
+        // ============================================================
+        function formatDate(dateStr) {
+            const parts = dateStr.split('-');
+            const month = parseInt(parts[1]);
+            const day = parseInt(parts[2]);
+            const date = new Date(parts[0], month - 1, day);
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            return `${month}月${day}日 ${weekdays[date.getDay()]}`;
+        }
+
+        function getCabinName(cabin) {
+            const cabinMap = { 'economy': '经济舱', 'business': '商务舱', 'first': '头等舱' };
+            return cabinMap[cabin] || '经济舱';
+        }
+
+        function getTripTypeName(tripType) {
+            return tripType === 'roundtrip' ? '往返' : '单程';
+        }
+
+        function getPriceStatusText(status) {
+            const map = {
+                'lowest': '今日最低',
+                'good-value': '含行李后更划算',
+                'comprehensive': '综合最优'
+            };
+            return map[status] || null;
+        }
+
+        function parseDuration(duration) {
+            const match = duration.match(/(\d+)h(\d+)m/);
+            if (match) {
+                return parseInt(match[1]) * 60 + parseInt(match[2]);
+            }
+            return 0;
+        }
+
+        // ============================================================
+        // 页面模式切换
+        // ============================================================
+        function showHomePage() {
+            document.getElementById('home-page').classList.remove('hidden');
+            document.getElementById('result-page').classList.remove('show');
+        }
+
+        function showResultPage() {
+            document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('result-page').classList.add('show');
+            initResultPage();
+        }
+
+        // ============================================================
+        // 首页功能
+        // ============================================================
+        function initHomePage() {
+            // 单程/往返切换
+            document.querySelectorAll('#home-trip-tabs .trip-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('#home-trip-tabs .trip-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    searchParams.tripType = tab.dataset.type;
+                    const returnDateGroup = document.getElementById('return-date-group');
+                    if (searchParams.tripType === 'roundtrip') {
+                        returnDateGroup.classList.add('show');
+                    } else {
+                        returnDateGroup.classList.remove('show');
+                    }
+                });
+            });
+
+            // 人数加减
+            document.getElementById('passenger-minus').addEventListener('click', () => {
+                if (searchParams.passengers > 1) {
+                    searchParams.passengers--;
+                    document.getElementById('passenger-count').textContent = searchParams.passengers;
+                }
+                document.getElementById('passenger-minus').disabled = searchParams.passengers <= 1;
+            });
+
+            document.getElementById('passenger-plus').addEventListener('click', () => {
+                if (searchParams.passengers < 9) {
+                    searchParams.passengers++;
+                    document.getElementById('passenger-count').textContent = searchParams.passengers;
+                }
+                document.getElementById('passenger-minus').disabled = searchParams.passengers <= 1;
+            });
+
+            // 舱位选择
+            document.querySelectorAll('#home-cabin-options .cabin-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    document.querySelectorAll('#home-cabin-options .cabin-option').forEach(o => o.classList.remove('active'));
+                    option.classList.add('active');
+                    searchParams.cabin = option.dataset.cabin;
+                });
+            });
+
+            // 城市选择
+            initCityList('origin-panel', 'origin-list', 'origin-search', (city) => {
+                searchParams.origin = city;
+                document.getElementById('origin-input').value = city;
+                closeAllPanels();
+            });
+
+            initCityList('dest-panel', 'dest-list', 'dest-search', (city) => {
+                searchParams.destination = city;
+                document.getElementById('dest-input').value = city;
+                closeAllPanels();
+            });
+
+            // 交换城市
+            document.getElementById('swap-btn').addEventListener('click', () => {
+                if (searchParams.origin && searchParams.destination) {
+                    const temp = searchParams.origin;
+                    searchParams.origin = searchParams.destination;
+                    searchParams.destination = temp;
+                    document.getElementById('origin-input').value = searchParams.origin;
+                    document.getElementById('dest-input').value = searchParams.destination;
+                }
+            });
+
+            // 日历功能
+            initDepartCalendar();
+            initReturnCalendar();
+
+            // 日历导航按钮
+            document.getElementById('prev-month').onclick = () => {
+                if (currentMonth === 1) { currentMonth = 12; currentYear--; }
+                else { currentMonth--; }
+                if (currentYear < 2026) { currentYear = 2026; currentMonth = 4; }
+                initDepartCalendar();
+            };
+
+            document.getElementById('next-month').onclick = () => {
+                if (currentMonth === 12) { currentMonth = 1; currentYear++; }
+                else { currentMonth++; }
+                if (currentYear > 2027) { currentYear = 2027; currentMonth = 12; }
+                initDepartCalendar();
+            };
+
+            document.getElementById('return-prev-month').onclick = () => {
+                if (returnCurrentMonth === 1) { returnCurrentMonth = 12; returnCurrentYear--; }
+                else { returnCurrentMonth--; }
+                if (returnCurrentYear < 2026) { returnCurrentYear = 2026; returnCurrentMonth = 4; }
+                initReturnCalendar();
+            };
+
+            document.getElementById('return-next-month').onclick = () => {
+                if (returnCurrentMonth === 12) { returnCurrentMonth = 1; returnCurrentYear++; }
+                else { returnCurrentMonth++; }
+                if (returnCurrentYear > 2027) { returnCurrentYear = 2027; returnCurrentMonth = 12; }
+                initReturnCalendar();
+            };
+
+            // 年月选择点击
+            document.getElementById('year-select').onclick = (e) => {
+                e.stopPropagation();
+                document.getElementById('month-dropdown').classList.remove('show');
+                document.getElementById('year-dropdown').classList.toggle('show');
+            };
+
+            document.getElementById('month-select').onclick = (e) => {
+                e.stopPropagation();
+                document.getElementById('year-dropdown').classList.remove('show');
+                document.getElementById('month-dropdown').classList.toggle('show');
+            };
+
+            document.getElementById('return-year-select').onclick = (e) => {
+                e.stopPropagation();
+                document.getElementById('return-month-dropdown').classList.remove('show');
+                document.getElementById('return-year-dropdown').classList.toggle('show');
+            };
+
+            document.getElementById('return-month-select').onclick = (e) => {
+                e.stopPropagation();
+                document.getElementById('return-year-dropdown').classList.remove('show');
+                document.getElementById('return-month-dropdown').classList.toggle('show');
+            };
+
+            // 面板展开/收起
+            document.getElementById('origin-box').addEventListener('click', () => {
+                closeAllPanels();
+                document.getElementById('origin-panel').classList.add('show');
+                document.getElementById('origin-box').classList.add('active');
+            });
+
+            document.getElementById('dest-box').addEventListener('click', () => {
+                closeAllPanels();
+                document.getElementById('dest-panel').classList.add('show');
+                document.getElementById('dest-box').classList.add('active');
+            });
+
+            document.getElementById('date-box').addEventListener('click', () => {
+                closeAllPanels();
+                document.getElementById('date-panel').classList.add('show');
+                document.getElementById('date-box').classList.add('active');
+            });
+
+            document.getElementById('return-date-box').addEventListener('click', () => {
+                closeAllPanels();
+                document.getElementById('return-date-panel').classList.add('show');
+                document.getElementById('return-date-box').classList.add('active');
+            });
+
+            document.querySelectorAll('.date-panel').forEach(panel => {
+                panel.addEventListener('click', (e) => e.stopPropagation());
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.input-group')) {
+                    closeAllPanels();
+                }
+            });
+
+            // 查询按钮
+            document.getElementById('submit-btn').addEventListener('click', () => {
+                if (!searchParams.origin || !searchParams.destination || !searchParams.departDate) {
+                    alert('请填写出发地、到达地和出发日期');
+                    return;
+                }
+
+                if (searchParams.tripType === 'roundtrip' && !searchParams.returnDate) {
+                    alert('请填写返程日期');
+                    return;
+                }
+
+                showResultPage();
+            });
+        }
+
+        function initCityList(panelId, listId, searchId, onSelect) {
+            const list = document.getElementById(listId);
+            const searchInput = document.getElementById(searchId);
+
+            function renderList(filter = '') {
+                list.innerHTML = '';
+                const filtered = cities.filter(city =>
+                    city.toLowerCase().includes(filter.toLowerCase())
+                );
+                filtered.forEach(city => {
+                    const item = document.createElement('div');
+                    item.className = 'city-item';
+                    item.textContent = city;
+                    item.onclick = () => onSelect(city);
+                    list.appendChild(item);
+                });
+            }
+
+            renderList();
+            searchInput.addEventListener('input', (e) => renderList(e.target.value));
+        }
+
+        function initYearDropdown(panelId, selectId, yearArray, currentY, onChange) {
+            const dropdown = document.getElementById(panelId);
+            dropdown.innerHTML = '';
+            yearArray.forEach(year => {
+                const item = document.createElement('div');
+                item.className = 'year-item' + (year === currentY ? ' selected' : '');
+                item.textContent = year + '年';
+                item.onclick = () => {
+                    onChange(year);
+                    dropdown.classList.remove('show');
+                };
+                dropdown.appendChild(item);
+            });
+        }
+
+        function initMonthDropdown(panelId, selectId, currentM, onChange) {
+            const dropdown = document.getElementById(panelId);
+            dropdown.innerHTML = '';
+            months.forEach(month => {
+                const item = document.createElement('div');
+                item.className = 'month-item' + (month === currentM ? ' selected' : '');
+                item.textContent = month + '月';
+                item.onclick = () => {
+                    onChange(month);
+                    dropdown.classList.remove('show');
+                };
+                dropdown.appendChild(item);
+            });
+        }
+
+        function renderCalendar(daysId, yearSelectId, monthSelectId, currentY, currentM, selectedD, onSelect) {
+            const daysContainer = document.getElementById(daysId);
+            daysContainer.innerHTML = '';
+
+            const firstDay = new Date(currentY, currentM - 1, 1);
+            const lastDay = new Date(currentY, currentM, 0);
+            const daysInMonth = lastDay.getDate();
+            const startWeekday = firstDay.getDay();
+
+            const prevMonthLastDay = new Date(currentY, currentM - 2, 0).getDate();
+            for (let i = startWeekday - 1; i >= 0; i--) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'date-day other-month';
+                dayEl.textContent = prevMonthLastDay - i;
+                daysContainer.appendChild(dayEl);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'date-day';
+                dayEl.textContent = day;
+
+                const dateStr = `${currentY}-${currentM}-${day}`;
+                const thisDate = new Date(currentY, currentM - 1, day);
+
+                if (thisDate.getTime() === today.getTime()) {
+                    dayEl.classList.add('today');
+                }
+
+                if (selectedD === dateStr) {
+                    dayEl.classList.add('selected');
+                }
+
+                if (thisDate < today) {
+                    dayEl.classList.add('disabled');
+                } else {
+                    dayEl.onclick = () => onSelect(currentY, currentM, day);
+                }
+
+                daysContainer.appendChild(dayEl);
+            }
+
+            const remainingDays = 42 - (startWeekday + daysInMonth);
+            for (let i = 1; i <= remainingDays; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'date-day other-month';
+                dayEl.textContent = i;
+                daysContainer.appendChild(dayEl);
+            }
+
+            document.getElementById(yearSelectId).textContent = currentY + '年';
+            document.getElementById(monthSelectId).textContent = currentM + '月';
+        }
+
+        function initDepartCalendar() {
+            initYearDropdown('year-dropdown', 'year-select', years, currentYear, (year) => {
+                currentYear = year;
+                renderDepartCalendar();
+            });
+            initMonthDropdown('month-dropdown', 'month-select', currentMonth, (month) => {
+                currentMonth = month;
+                renderDepartCalendar();
+            });
+            renderDepartCalendar();
+        }
+
+        function renderDepartCalendar() {
+            renderCalendar('date-days', 'year-select', 'month-select', currentYear, currentMonth, searchParams.departDate, (year, month, day) => {
+                searchParams.departDate = `${year}-${month}-${day}`;
+                const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                const date = new Date(year, month - 1, day);
+                document.getElementById('date-input').value = `${month}月${day}日 ${weekdays[date.getDay()]}`;
+                closeAllPanels();
+                renderDepartCalendar();
+            });
+        }
+
+        function initReturnCalendar() {
+            initYearDropdown('return-year-dropdown', 'return-year-select', years, returnCurrentYear, (year) => {
+                returnCurrentYear = year;
+                renderReturnCalendar();
+            });
+            initMonthDropdown('return-month-dropdown', 'return-month-select', returnCurrentMonth, (month) => {
+                returnCurrentMonth = month;
+                renderReturnCalendar();
+            });
+            renderReturnCalendar();
+        }
+
+        function renderReturnCalendar() {
+            renderCalendar('return-date-days', 'return-year-select', 'return-month-select', returnCurrentYear, returnCurrentMonth, searchParams.returnDate, (year, month, day) => {
+                const returnDate = new Date(year, month - 1, day);
+                const departDate = searchParams.departDate ? new Date(searchParams.departDate.replace(/-/g, '/')) : null;
+
+                if (departDate && returnDate < departDate) {
+                    alert('返程日期不能早于出发日期');
+                    return;
+                }
+
+                searchParams.returnDate = `${year}-${month}-${day}`;
+                const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                const date = new Date(year, month - 1, day);
+                document.getElementById('return-date-input').value = `${month}月${day}日 ${weekdays[date.getDay()]}`;
+                closeAllPanels();
+                renderReturnCalendar();
+            });
+        }
+
+        function closeAllPanels() {
+            document.querySelectorAll('.city-panel, .date-panel, .year-dropdown, .month-dropdown').forEach(panel => {
+                panel.classList.remove('show');
+            });
+            document.querySelectorAll('.input-box').forEach(box => {
+                box.classList.remove('active');
+            });
+        }
+
+        // ============================================================
+        // 结果页功能
+        // ============================================================
+        function initResultPage() {
+            // 更新顶部显示
+            document.getElementById('route-display').textContent = `${searchParams.origin} → ${searchParams.destination}`;
+            document.getElementById('date-display').textContent = formatDate(searchParams.departDate);
+            document.getElementById('trip-type-display').textContent = getTripTypeName(searchParams.tripType);
+            document.getElementById('passengers-display').textContent = `${searchParams.passengers}人`;
+            document.getElementById('cabin-display').textContent = getCabinName(searchParams.cabin);
+
+            // 初始化编辑面板
+            document.getElementById('edit-origin').value = searchParams.origin;
+            document.getElementById('edit-destination').value = searchParams.destination;
+            document.getElementById('edit-depart-date').value = searchParams.departDate;
+            editPassengerCount = searchParams.passengers;
+            document.getElementById('edit-passenger-count').textContent = editPassengerCount;
+            editCabin = searchParams.cabin;
+            editTripType = searchParams.tripType;
+
+            // 更新航班价格
+            flightData.forEach(flight => {
+                flight.totalPrice = flight.pricePerPerson * searchParams.passengers;
+            });
+
+            // 渲染航班卡片
+            renderFlightCards();
+        }
+
+        function renderFlightCards() {
+            const container = document.getElementById('flight-cards');
+            container.innerHTML = '';
+
+            // 排序
+            let sortedFlights = [...flightData];
+            switch (currentFilter.sort) {
+                case 'price':
+                    sortedFlights.sort((a, b) => a.totalPrice - b.totalPrice);
+                    break;
+                case 'duration':
+                    sortedFlights.sort((a, b) => parseDuration(a.duration) - parseDuration(b.duration));
+                    break;
+                case 'departTime':
+                    sortedFlights.sort((a, b) => {
+                        const timeA = parseInt(a.departTime.replace(':', ''));
+                        const timeB = parseInt(b.departTime.replace(':', ''));
+                        return timeA - timeB;
+                    });
+                    break;
+                case 'comprehensive':
+                    sortedFlights.sort((a, b) => {
+                        if (a.isRecommended && !b.isRecommended) return -1;
+                        if (!a.isRecommended && b.isRecommended) return 1;
+                        return a.totalPrice - b.totalPrice;
+                    });
+                    break;
+            }
+
+            // 筛选
+            let filteredFlights = sortedFlights;
+
+            if (currentFilter.basic !== '全部') {
+                switch (currentFilter.basic) {
+                    case '最低价':
+                        filteredFlights = filteredFlights.filter(f => f.priceStatus === 'lowest');
+                        break;
+                    case '最短时长':
+                        filteredFlights = filteredFlights.sort((a, b) => {
+                            const durationA = parseDuration(a.duration);
+                            const durationB = parseDuration(b.duration);
+                            return durationA - durationB;
+                        });
+                        break;
+                    case '仅直飞':
+                        filteredFlights = filteredFlights.filter(f => f.isDirect);
+                        break;
+                    case '可退改':
+                        filteredFlights = filteredFlights.filter(f => !f.refundPolicy.includes('不可'));
+                        break;
+                    case '含托运':
+                        filteredFlights = filteredFlights.filter(f => f.baggageIncluded);
+                        break;
+                }
+            }
+
+            if (currentFilter.ai) {
+                switch (currentFilter.ai) {
+                    case '真低价':
+                        filteredFlights = filteredFlights.filter(f => f.priceStatus === 'lowest');
+                        break;
+                    case '近7日低位':
+                        filteredFlights = filteredFlights.filter(f => f.priceStatus === 'lowest' || f.priceStatus === 'good-value');
+                        break;
+                    case '含行李更划算':
+                        filteredFlights = filteredFlights.filter(f => f.baggageIncluded);
+                        break;
+                    case '退改更稳':
+                        filteredFlights = filteredFlights.filter(f => !f.refundPolicy.includes('不可'));
+                        break;
+                    case '适合2人出行':
+                        filteredFlights = filteredFlights.filter(f => f.priceStatus === 'comprehensive' || f.baggageIncluded);
+                        break;
+                }
+            }
+
+            filteredFlights.forEach(flight => {
+                const card = document.createElement('div');
+                card.className = 'flight-card';
+                card.dataset.id = flight.id;
+
+                const departAirport = flight.departAirport.replace(/北京[^机场]*机场/, searchParams.origin + '机场');
+                const arriveAirport = flight.arriveAirport.replace(/上海[^机场]*机场/, searchParams.destination + '机场');
+
+                const priceStatusText = getPriceStatusText(flight.priceStatus);
+                const priceStatusHtml = priceStatusText ? `<span class="status-tag ${flight.priceStatus}">${priceStatusText}</span>` : '';
+
+                card.innerHTML = `
+                    <div class="card-main">
+                        <div class="airline-block">
+                            <div class="airline-info">
+                                <div class="airline-logo">${flight.airline.charAt(0)}</div>
+                                <div class="airline-name">${flight.airline}</div>
+                            </div>
+                            <div class="flight-no">${flight.flightNo}</div>
+                        </div>
+                        <div class="time-route-block">
+                            <div class="time-block">
+                                <div class="time">${flight.departTime}</div>
+                                <div class="airport">${departAirport}</div>
+                            </div>
+                            <div class="duration-block">
+                                <div class="line"></div>
+                                <div class="duration">${flight.duration}</div>
+                                <div class="direct">${flight.isDirect ? '直飞' : '中转'}</div>
+                            </div>
+                            <div class="time-block">
+                                <div class="time">${flight.arriveTime}</div>
+                                <div class="airport">${arriveAirport}</div>
+                            </div>
+                        </div>
+                        <div class="price-block">
+                            <div class="price">¥${flight.totalPrice}<span class="unit">/总价</span></div>
+                            ${searchParams.passengers >= 2 ? `<div class="per-person">人均¥${flight.pricePerPerson}</div>` : ''}
+                            <div class="price-status-tags">${priceStatusHtml}</div>
+                        </div>
+                    </div>
+                    <div class="discovery-evidence">
+                        <div class="evidence-row">
+                            <div class="evidence-item">
+                                <span class="label">裸票价：</span>
+                                <span class="value">${flight.discoveryEvidence.nakedPrice}</span>
+                            </div>
+                            <div class="evidence-item">
+                                <span class="label">托运：</span>
+                                <span class="value ${flight.baggageIncluded ? 'positive' : 'negative'}">${flight.discoveryEvidence.baggage}</span>
+                            </div>
+                            <div class="evidence-item">
+                                <span class="label">退改：</span>
+                                <span class="value">${flight.discoveryEvidence.refund}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-insight">
+                        <div class="insight-text">AI解读：<span class="highlight">${flight.discoveryEvidence.aiInsight}</span></div>
+                        <div class="ai-tags">
+                            ${flight.aiTags.map(tag => `<span class="ai-tag ${tag.type}">${tag.text}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-outline ai-detail-btn" data-id="${flight.id}">查看AI解读</button>
+                        <button class="btn btn-compare add-compare-btn" data-id="${flight.id}">加入对比</button>
+                        <button class="btn btn-buy">去购买</button>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            bindCardEvents();
+        }
+
+        function bindCardEvents() {
+            document.querySelectorAll('.ai-detail-btn').forEach(btn => {
+                btn.addEventListener('click', () => openAIDrawer(btn.dataset.id));
+            });
+
+            document.querySelectorAll('.add-compare-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    addToCompare(btn.dataset.id);
+                    btn.textContent = '已加入';
+                    btn.disabled = true;
+                });
+            });
+        }
+
+        // ============================================================
+        // 结果页事件
+        // ============================================================
+        function initResultPageEvents() {
+            // 返回按钮
+            document.getElementById('back-btn').addEventListener('click', showHomePage);
+
+            // search-info鼠标悬停显示/隐藏编辑面板
+            const searchInfo = document.getElementById('search-info');
+            const editPanel = document.getElementById('search-edit-panel');
+            let hoverTimer = null;
+
+            searchInfo.addEventListener('mouseenter', () => {
+                clearTimeout(hoverTimer);
+                editPanel.classList.add('show');
+            });
+
+            searchInfo.addEventListener('mouseleave', () => {
+                hoverTimer = setTimeout(() => {
+                    if (!editPanel.matches(':hover')) {
+                        editPanel.classList.remove('show');
+                    }
+                }, 200);
+            });
+
+            editPanel.addEventListener('mouseenter', () => {
+                clearTimeout(hoverTimer);
+            });
+
+            editPanel.addEventListener('mouseleave', () => {
+                hoverTimer = setTimeout(() => {
+                    editPanel.classList.remove('show');
+                }, 200);
+            });
+
+            // 用户头像
+            document.getElementById('user-avatar').addEventListener('click', () => {
+                alert('功能演示：用户中心');
+            });
+
+            // 筛选标签
+            document.querySelectorAll('.filter-row .filter-tag').forEach(tag => {
+                tag.addEventListener('click', () => {
+                    const row = tag.closest('.filter-row');
+                    const isAIRow = row.querySelector('.filter-label')?.textContent === 'AI发现';
+                    const filterValue = tag.textContent.trim();
+                    const isActive = tag.classList.contains('active');
+
+                    if (isActive && filterValue !== '全部') {
+                        row.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+                        const allTag = row.querySelector('.filter-tag:first-child');
+                        if (allTag && allTag.textContent.trim() === '全部') {
+                            allTag.classList.add('active');
+                        }
+
+                        if (isAIRow) {
+                            currentFilter.ai = null;
+                        } else {
+                            currentFilter.basic = '全部';
+                        }
+                    } else {
+                        row.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+                        tag.classList.add('active');
+
+                        if (isAIRow) {
+                            currentFilter.ai = filterValue === '全部' ? null : filterValue;
+                        } else {
+                            currentFilter.basic = filterValue;
+                        }
+                    }
+                    renderFlightCards();
+                });
+            });
+
+            // 排序选项
+            document.querySelectorAll('.sort-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.sort-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    const sortText = item.textContent.trim();
+                    switch (sortText) {
+                        case '价格 ↑':
+                            currentFilter.sort = 'price';
+                            break;
+                        case '时长 ↑':
+                            currentFilter.sort = 'duration';
+                            break;
+                        case '起飞时间 ↑':
+                            currentFilter.sort = 'departTime';
+                            break;
+                        case '综合排序 ↓':
+                            currentFilter.sort = 'comprehensive';
+                            break;
+                    }
+                    renderFlightCards();
+                });
+            });
+
+            // AI发现摘要卡按钮
+            document.getElementById('view-best-btn').addEventListener('click', () => {
+                openAIDrawer('F003');
+            });
+
+            document.getElementById('view-alt-date-btn').addEventListener('click', () => {
+                document.querySelector('.alt-date-section').scrollIntoView({ behavior: 'smooth' });
+            });
+
+            // 关闭航班分析抽屉
+            document.getElementById('drawer-close').addEventListener('click', closeAIDrawer);
+
+            // AI助手触发按钮
+            document.getElementById('ai-trigger-btn').addEventListener('click', () => {
+                document.getElementById('ai-assistant-panel').classList.add('show');
+                document.getElementById('overlay').classList.add('show');
+            });
+
+            // 关闭AI助手面板
+            document.getElementById('ai-panel-close').addEventListener('click', () => {
+                document.getElementById('ai-assistant-panel').classList.remove('show');
+                document.getElementById('overlay').classList.remove('show');
+            });
+
+            // 点击overlay关闭
+            document.getElementById('overlay').addEventListener('click', () => {
+                document.getElementById('ai-assistant-panel').classList.remove('show');
+                document.getElementById('ai-drawer').classList.remove('show');
+                document.getElementById('overlay').classList.remove('show');
+            });
+
+            // 抽屉内加入对比
+            document.getElementById('drawer-compare-btn').addEventListener('click', () => {
+                const flightId = document.getElementById('drawer-content').dataset.currentFlightId;
+                addToCompare(flightId);
+                closeAIDrawer();
+            });
+
+            // 对比托盘
+            document.getElementById('view-compare-btn').addEventListener('click', openCompareModal);
+            document.getElementById('cancel-compare-btn').addEventListener('click', () => {
+                clearCompareList();
+                document.querySelectorAll('.add-compare-btn').forEach(btn => {
+                    btn.textContent = '加入对比';
+                    btn.disabled = false;
+                });
+            });
+
+            // 对比弹层
+            document.getElementById('modal-close').addEventListener('click', closeCompareModal);
+            document.getElementById('modal-cancel').addEventListener('click', closeCompareModal);
+            document.getElementById('modal-confirm').addEventListener('click', () => {
+                alert('已选择：东方航空 MU5102\n即将跳转到购票页面...');
+                closeCompareModal();
+            });
+
+            // 继续问AI
+            document.getElementById('drawer-ask-btn').addEventListener('click', () => {
+                document.getElementById('ai-assistant-panel').classList.add('show');
+                closeAIDrawer();
+            });
+
+            // 预置问题
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const question = btn.dataset.question;
+                    document.getElementById('chat-input').value = question;
+                });
+            });
+
+            // 发送消息
+            document.getElementById('chat-send-btn').addEventListener('click', sendChatMessage);
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendChatMessage();
+            });
+
+            // 编辑面板事件
+            initEditPanelEvents();
+        }
+
+        function initEditPanelEvents() {
+            // 单程/往返切换
+            document.querySelectorAll('#edit-trip-tabs .trip-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('#edit-trip-tabs .trip-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    editTripType = tab.dataset.type;
+                    document.getElementById('edit-return-date-group').style.display = editTripType === 'roundtrip' ? 'block' : 'none';
+                });
+            });
+
+            // 人数调整
+            document.getElementById('edit-passenger-minus').addEventListener('click', () => {
+                if (editPassengerCount > 1) {
+                    editPassengerCount--;
+                    document.getElementById('edit-passenger-count').textContent = editPassengerCount;
+                }
+            });
+
+            document.getElementById('edit-passenger-plus').addEventListener('click', () => {
+                if (editPassengerCount < 9) {
+                    editPassengerCount++;
+                    document.getElementById('edit-passenger-count').textContent = editPassengerCount;
+                }
+            });
+
+            // 舱位选择
+            document.querySelectorAll('#edit-cabin-options .cabin-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    document.querySelectorAll('#edit-cabin-options .cabin-option').forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                    editCabin = opt.dataset.cabin;
+                });
+            });
+
+            // 搜索航班按钮
+            document.getElementById('edit-search').addEventListener('click', () => {
+                searchParams.origin = document.getElementById('edit-origin').value || '北京';
+                searchParams.destination = document.getElementById('edit-destination').value || '上海';
+                searchParams.departDate = document.getElementById('edit-depart-date').value || '2026-4-18';
+                searchParams.tripType = editTripType;
+                searchParams.passengers = editPassengerCount;
+                searchParams.cabin = editCabin;
+
+                document.getElementById('search-edit-panel').classList.remove('show');
+                initResultPage();
+            });
+
+            // 重置按钮
+            document.getElementById('edit-reset').addEventListener('click', () => {
+                document.getElementById('edit-origin').value = searchParams.origin;
+                document.getElementById('edit-destination').value = searchParams.destination;
+                document.getElementById('edit-depart-date').value = searchParams.departDate;
+                editPassengerCount = searchParams.passengers;
+                document.getElementById('edit-passenger-count').textContent = editPassengerCount;
+                editCabin = searchParams.cabin;
+                document.querySelectorAll('#edit-cabin-options .cabin-option').forEach(opt => {
+                    opt.classList.toggle('active', opt.dataset.cabin === editCabin);
+                });
+            });
+
+            // 交换城市
+            document.getElementById('swap-cities').addEventListener('click', () => {
+                const origin = document.getElementById('edit-origin');
+                const destination = document.getElementById('edit-destination');
+                const temp = origin.value;
+                origin.value = destination.value;
+                destination.value = temp;
+            });
+        }
+
+        // ============================================================
+        // 对比功能
+        // ============================================================
+        function addToCompare(flightId) {
+            if (!compareList.includes(flightId)) {
+                if (compareList.length >= 3) {
+                    alert('最多只能对比3个航班');
+                    return;
+                }
+                compareList.push(flightId);
+                updateCompareTray();
+            }
+        }
+
+        function updateCompareTray() {
+            const tray = document.getElementById('compare-tray');
+            const count = document.getElementById('compare-count');
+            count.textContent = compareList.length;
+
+            if (compareList.length > 0) {
+                tray.classList.add('show');
+            } else {
+                tray.classList.remove('show');
+            }
+        }
+
+        function clearCompareList() {
+            compareList = [];
+            updateCompareTray();
+        }
+
+        // ============================================================
+        // AI解读抽屉
+        // ============================================================
+        function openAIDrawer(flightId) {
+            const flight = flightData.find(f => f.id === flightId);
+            if (!flight) return;
+
+            const departAirport = flight.departAirport.replace(/北京[^机场]*机场/, searchParams.origin + '机场');
+            const arriveAirport = flight.arriveAirport.replace(/上海[^机场]*机场/, searchParams.destination + '机场');
+
+            const content = document.getElementById('drawer-content');
+            content.innerHTML = `
+                <div class="flight-mini">
+                    <div class="flight-name">${flight.airline} ${flight.flightNo}</div>
+                    <div class="flight-time">${flight.departTime} ${departAirport} → ${flight.arriveTime} ${arriveAirport}</div>
+                </div>
+                <div class="section">
+                    <div class="section-title">📌 为什么这张票值得买</div>
+                    <div class="section-content">
+                        <ul>${flight.aiDetail.whyWorth.map(item => `<li>${item}</li>`).join('')}</ul>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">⚠️ 有哪些隐性成本</div>
+                    <div class="section-content">
+                        <ul>${flight.aiDetail.hiddenCosts.map(item => `<li>${item}</li>`).join('')}</ul>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">👤 适合什么样的用户</div>
+                    <div class="section-content">
+                        <ul>${flight.aiDetail.suitableFor.map(item => `<li>${item}</li>`).join('')}</ul>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">🔍 是否有更优替代方案</div>
+                    <div class="section-content">
+                        ${flight.aiDetail.alternatives.map(alt => `
+                            <div class="alt-item">
+                                <div class="alt-name">${alt.name}</div>
+                                <div class="alt-desc">${alt.desc}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            content.dataset.currentFlightId = flightId;
+            document.getElementById('ai-drawer').classList.add('show');
+            document.getElementById('overlay').classList.add('show');
+        }
+
+        function closeAIDrawer() {
+            document.getElementById('ai-drawer').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        // ============================================================
+        // 对比弹层
+        // ============================================================
+        function openCompareModal() {
+            if (compareList.length < 2) {
+                alert('请至少选择2个航班进行对比');
+                return;
+            }
+
+            const flights = compareList.map(id => flightData.find(f => f.id === id));
+
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = `
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>对比维度</th>
+                            ${flights.map(f => `<th class="flight-col">${f.flightNo}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>价格</td>
+                            ${flights.map(f => `<td class="price-cell">¥${f.totalPrice}</td>`).join('')}
+                        </tr>
+                        <tr>
+                            <td>人均价</td>
+                            ${flights.map(f => `<td>¥${f.pricePerPerson}</td>`).join('')}
+                        </tr>
+                        <tr>
+                            <td>起飞时间</td>
+                            ${flights.map(f => `<td>${f.departTime}</td>`).join('')}
+                        </tr>
+                        <tr>
+                            <td>飞行时长</td>
+                            ${flights.map(f => `<td>${f.duration}</td>`).join('')}
+                        </tr>
+                        <tr>
+                            <td>直飞</td>
+                            ${flights.map(f => `<td class="${f.isDirect ? 'check' : 'cross'}">${f.isDirect ? '✓' : '✗'}</td>`).join('')}
+                        </tr>
+                        <tr>
+                            <td>托运</td>
+                            ${flights.map(f => `<td class="${f.baggageIncluded ? 'check' : 'cross'}">${f.baggageIncluded ? '✓' : '✗'}</td>`).join('')}
+                        </tr>
+                        <tr>
+                            <td>退改</td>
+                            ${flights.map(f => `<td>${f.refundPolicy}</td>`).join('')}
+                        </tr>
+                        <tr>
+                            <td>AI推荐</td>
+                            ${flights.map(f => `<td class="${f.isRecommended ? 'highlight' : ''}">${f.isRecommended ? '⭐ 推荐' : '-'}</td>`).join('')}
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="ai-insight">
+                    <div class="insight-title">🤖 AI 对比洞察</div>
+                    <div class="insight-list">${generateCompareInsight(flights)}</div>
+                </div>
+            `;
+
+            document.getElementById('compare-modal').classList.add('show');
+        }
+
+        function generateCompareInsight(flights) {
+            const cheapest = flights.reduce((a, b) => a.pricePerPerson < b.pricePerPerson ? a : b);
+            const recommended = flights.find(f => f.isRecommended);
+
+            let insight = `• 价格最低：${cheapest.airline} ${cheapest.flightNo} ¥${cheapest.pricePerPerson}/人<br>`;
+            if (recommended) {
+                insight += `• 综合最优：${recommended.airline} ${recommended.flightNo} ¥${recommended.pricePerPerson}/人（推荐）`;
+            }
+
+            return insight;
+        }
+
+        function closeCompareModal() {
+            document.getElementById('compare-modal').classList.remove('show');
+        }
+
+        // ============================================================
+        // 聊天功能
+        // ============================================================
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const container = document.getElementById('chat-container');
+
+            container.innerHTML += `
+                <div class="chat-message user">
+                    <div class="chat-avatar">👤</div>
+                    <div class="chat-bubble">${message}</div>
+                </div>
+            `;
+
+            input.value = '';
+
+            setTimeout(() => {
+                container.innerHTML += `
+                    <div class="chat-message ai">
+                        <div class="chat-avatar">🤖</div>
+                        <div class="chat-bubble">根据当前航班结果，我建议您选择东方航空 MU5102（10:00-12:15），综合时间、价格、服务考虑，这是最优选择。需要我详细解释原因吗？</div>
+                    </div>
+                `;
+                container.scrollTop = container.scrollHeight;
+            }, 500);
+        }
+
+        // ============================================================
+        // 初始化
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            initHomePage();
+            initResultPageEvents();
+        });
+    </script>
+</body>
+</html>
